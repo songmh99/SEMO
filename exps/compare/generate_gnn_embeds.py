@@ -20,16 +20,16 @@ def parse_fd_rules(rule_path):
             rules.append((left.strip(), right.strip()))
     return rules
 
-# 构建图
+
 def build_graph(df, rules):
     G = nx.DiGraph()
-    node_texts = {} # 存储节点文本内容
+    node_texts = {} #
     for col in df.columns:
         unique_values = df[col].unique()
         for val in unique_values:
             node_id = f"{col}___{val}"
             G.add_node(node_id)
-            node_texts[node_id] = str(val) #确保是字符串，防止是NaN
+            node_texts[node_id] = str(val) 
     for left, right in rules:
         left_values = df[left].tolist()
         right_values = df[right].tolist()
@@ -38,29 +38,29 @@ def build_graph(df, rules):
     return G, node_texts
 
 
-# 生成节点嵌入
+
 def get_text_embedding(texts, model, tokenizer):
     if isinstance(texts, str):
-        texts = [texts] # 统一转换为 list
+        texts = [texts] # 
     # inputs = tokenizer(texts, return_tensors='pt', padding=True, truncation=True)
     inputs = tokenizer(texts, return_tensors='pt', padding=True, truncation=True,max_length=512,)
     with torch.no_grad():
         outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1) # 取平均池化作为最终特征
+    return outputs.last_hidden_state.mean(dim=1) # 
 
-# 生成所有节点的嵌入：
+
 def generate_node_embeddings(node_texts, model, tokenizer):
     embeddings = get_text_embedding(list(node_texts.values()), model, tokenizer)
     return {node:emb for node, emb in zip(node_texts.keys(), embeddings)}
 
-# 转换为 PyTorch Geometric格式
+
 def graph_to_pyg(G, node_embeddings):
-    node_list = list(G.nodes()) # 显式创建一个节点列表，确保 node_map 和 x 顺序一致
+    node_list = list(G.nodes()) # 
     node_map = {node: i for i, node in enumerate(node_list)}
     x = torch.stack([node_embeddings[node] for node in node_list])
-    edge_index = torch.tensor([[node_map[u], node_map[v]] for u,v in G.edges()], dtype=torch.long).t().contiguous() # 转置：edge_index shape: [2, num_edges]
-    # node_map = {node: i for i,node in enumerate(G.nodes())} # G.nodes() 遍历是有序的，和添加节点的顺序一致
-    # x = torch.stack([node_embeddings[node] for node in G.nodes()]) # 你用 enumerate(G.nodes()) 构建了 node_map，这意味着 x[i] 就是节点 node 对应的嵌入，其中 i = node_map[node]
+    edge_index = torch.tensor([[node_map[u], node_map[v]] for u,v in G.edges()], dtype=torch.long).t().contiguous() # 
+    # node_map = {node: i for i,node in enumerate(G.nodes())} # G.nodes() 
+    # x = torch.stack([node_embeddings[node] for node in G.nodes()]) # 
     return Data(x=x, edge_index=edge_index), node_list
 
 # gnn_node_labels, gnn_labeled_indices = build_partial_node_labels(nodewithlabel_df, num_nodes=data1.x.size(0), num_classes=num_classes)
@@ -108,7 +108,7 @@ def structural_contrastive_loss(embeddings, edge_index, tau=2.0, num_neg_samples
 
     i, j = edge_index
 
-    # 构建邻接字典：记录每个节点的邻接节点（正样本）
+    # 
     adj_dict = defaultdict(set)
     for u, v in zip(i.tolist(), j.tolist()):
         adj_dict[u].add(v)
@@ -117,15 +117,15 @@ def structural_contrastive_loss(embeddings, edge_index, tau=2.0, num_neg_samples
     anchor = embeddings[i]              # [num_pos, dim]
     pos_embed = embeddings[j]           # [num_pos, dim]
 
-    # 正样本相似度
+
     pos_sim = F.cosine_similarity(anchor, pos_embed).unsqueeze(1)  # [num_pos, 1]
 
     neg_embeds = []
     for anchor_idx in i.tolist():
-        # 可选的负样本 = 非邻居且不是自身
+        # 
         neg_candidates = list(all_nodes - adj_dict[anchor_idx] - {anchor_idx})
         if len(neg_candidates) < num_neg_samples:
-            # 若候选负样本不够，可放宽限制或重复采样
+            # 
             # neg_candidates = neg_candidates + random.choices(neg_candidates, k=num_neg_samples - len(neg_candidates))
             neg_candidates = neg_candidates
         else:
@@ -143,23 +143,23 @@ def label_contrastive_loss44(cls_preds, gnn_node_labels, gnn_labeled_indices, em
     # softmax
     cls_preds = F.softmax(cls_preds, dim=1)
 
-    # label_mask = gnn_node_labels[gnn_labeled_indices].bool().to(device)  # 原来使用 mask 做 masked argmax
+    # label_mask = gnn_node_labels[gnn_labeled_indices].bool().to(device)  # 
     # masked_preds = cls_preds.masked_fill(~label_mask, float('-inf'))
-    # cls_representative_labels = masked_preds.argmax(dim=1)               # 预测值 argmax，易失衡
+    # cls_representative_labels = masked_preds.argmax(dim=1)               # 
 
-    # 使用真实标签，保证代表类和 label 分布一致
-    true_labels = gnn_node_labels[gnn_labeled_indices].to(device)  # [L, C] 多标签 one-hot
+    #
+    true_labels = gnn_node_labels[gnn_labeled_indices].to(device)  #
     label_mask = true_labels.bool().to(device)
     masked_preds = cls_preds.masked_fill(~label_mask, float('-inf'))
     cls_representative_labels = masked_preds.argmax(dim=1) 
 
-    # 正负样本判定（代表类相同为正样本，真实标签完全不同为负样本）
+    # 
     rep_labels_expand_1 = cls_representative_labels.unsqueeze(1)
     rep_labels_expand_2 = cls_representative_labels.unsqueeze(0)
     label_equal = rep_labels_expand_1 == rep_labels_expand_2
     label_equal.fill_diagonal_(False)
     label_disjoint = (true_labels @ true_labels.T) == 0
-    # 计算代表类频率（为负采样加权做准备）
+    # 
     label_freq = torch.bincount(cls_representative_labels, minlength=true_labels.shape[1])
     inv_freq = 1.0 / (label_freq.float() + 1e-6)
 
@@ -176,15 +176,15 @@ def label_contrastive_loss44(cls_preds, gnn_node_labels, gnn_labeled_indices, em
 
         if len(pos_idx) == 0 or len(neg_idx) < num_negatives:
             skipped += 1
-            continue  # 无法构造正负对
+            continue  # 
 
-        # 正样本（随机采样一个）
+        # 
         pos_sample_id = pos_idx[torch.randint(0, len(pos_idx), (1,))]
 
-        # 加权采样负样本
+        # 
         neg_labels = cls_representative_labels[neg_idx]
         neg_weights = inv_freq[neg_labels]  # [neg_num]
-        neg_weights = neg_weights / neg_weights.sum()  # 归一化防止采样报错
+        neg_weights = neg_weights / neg_weights.sum()  # 
         # print('neg_weights: ', neg_weights)
         neg_sample_ids = neg_idx[torch.multinomial(neg_weights, num_samples=num_negatives, replacement=True)]
 
@@ -193,7 +193,7 @@ def label_contrastive_loss44(cls_preds, gnn_node_labels, gnn_labeled_indices, em
         all_embeds = embeds_tmp_withlabel[all_idx]  # shape: [1 + num_neg, D]
         sim = F.cosine_similarity(anchor.unsqueeze(0), all_embeds) / tau  # shape: [1 + num_neg]
         logits = sim.unsqueeze(0)  # shape: [1, 1 + num_neg]
-        label = torch.zeros(1, dtype=torch.long, device=device)  # 正样本在 index 0
+        label = torch.zeros(1, dtype=torch.long, device=device)  # 
 
         loss = F.cross_entropy(logits, label)
         loss_all.append(loss)
