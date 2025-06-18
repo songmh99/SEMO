@@ -4,9 +4,9 @@ def read_graph_dc(graph):
     v = {}
     for edge in range(len(graph)):
         for i in range(len(graph[edge])):
-            #0中存放的指示是那条规则导致的违规
+   
             if(i==0):continue
-            #1,4,7....中存放为后两个因为哪个操作符违规
+  
             if(i%3==1):continue
             try:
                 v[graph[edge][i]].append(edge)

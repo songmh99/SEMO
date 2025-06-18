@@ -64,7 +64,7 @@ col_embeds1 = get_text_embedding(nodes_col_list1, pretrained_model1, pretrained_
 ###########################  GNN Taining ################################
 gnn_model1 = GNN(input_dim=embedding_dim1, hidden_dim=config['gnn_hidden_dim'], output_dim=config['text_embed_dim'], num_layers=3)
 cls_model1 = cellclsmodel1(embed_dim=config['text_embed_dim'], hidden_dim=config['cellclsmodel_hidden_dim'], num_classes=num_classes1).to(device)
-criterion = nn.BCEWithLogitsLoss() #支持多标签分类的损失函数
+criterion = nn.BCEWithLogitsLoss() #
 cls_model1.train().to(device)
 gnn_model1.train().to(device)
 
@@ -112,10 +112,10 @@ for i in range(iterate_num):
         param.requires_grad = train_cls
 
     if train_cls:
-        gnn_model1.eval()  # 切换到评估模式，关闭dropout等
-        with torch.no_grad():  # 不计算梯度
-            updated_embeddings = gnn_model1(data1.x.to(device), data1.edge_index.to(device))  # 获取更新后的节点嵌入
-        # 2. 将更新后的嵌入存储到 node_embeddings1 中
+        gnn_model1.eval()  # 
+        with torch.no_grad():  # 
+            updated_embeddings = gnn_model1(data1.x.to(device), data1.edge_index.to(device))  #
+        # 2.
         updated_node_embeddings = {node: updated_embeddings[node_list1.index(node)].cpu().numpy() for node in node_texts1.keys()}
         
         test_dataset1 = CellDataset1(dirty_path, test_df_path,device=device, text_embed_dim=config['text_embed_dim'],gnn_node_embeddings=updated_node_embeddings,config=config)
@@ -143,8 +143,8 @@ for i in range(iterate_num):
         f = open(iterating_train_log_file_path,'a')
         for j in range(small_epoch):
             gnn_output = gnn_model1(data1.x, data1.edge_index)
-            gnn_embeds_withlabel = gnn_output[gnn_labeled_indices1]  # 不 detach
-            cls_preds = cls_model1(col_embeds1, gnn_embeds_withlabel).detach()  # detach cls输出，只用来算 loss
+            gnn_embeds_withlabel = gnn_output[gnn_labeled_indices1]  # 
+            cls_preds = cls_model1(col_embeds1, gnn_embeds_withlabel).detach()  # 
             structural_loss = structural_contrastive_loss(gnn_output, data1.edge_index, tau=structloss_tau, num_neg_samples=structloss_neg_num)
             label_loss44 = label_contrastive_loss44(
                 cls_preds, gnn_node_labels1, gnn_labeled_indices1,gnn_embeds_withlabel,device=config['device'], tau=labelloss_tau, num_negatives=labelloss_neg_num
@@ -159,13 +159,13 @@ for i in range(iterate_num):
 
 
 ################################ Test Selector ##############################
-### GNN 训练过程是和 selector （cls_model）一起的，所以GNN embedding 训好了 说明 selector也训好了。
+#
 print('Test selector ...')
 cls_model1 = torch.load(iterating_cls_model_path)
 gnn_model1 = torch.load(iterating_gnn_model_path)
-with torch.no_grad():  # 不计算梯度
-    updated_embeddings = gnn_model1(data1.x.to(device), data1.edge_index.to(device))  # 获取更新后的节点嵌入
-# 2. 将更新后的嵌入存储到 node_embeddings1 中
+with torch.no_grad():  # 
+    updated_embeddings = gnn_model1(data1.x.to(device), data1.edge_index.to(device))  # 
+#
 updated_node_embeddings = {node: updated_embeddings[node_list1.index(node)].cpu().numpy() for node in node_texts1.keys()}
 
 test_dataset1 = CellDataset1(dirty_path, test_df_path,device=device, text_embed_dim=config['text_embed_dim'],gnn_node_embeddings=updated_node_embeddings,config=config)
@@ -180,9 +180,9 @@ print('compute_mlp_metric1:')
 print(f'precision: {precision}, recall: {recall}, f1: {f1}, pred_useless: {pred_useless}, all_test_num: {all_test_num}')
 ######################### save gnn node embeddings ###################
 # save: node_texts1
-# 将 node_embeddings1 变成 numpy 数组
+
 print('Saving node embedding.')
 iter_gnn_node_texts_path = config['iter_gnn_node_texts_path']
-np.savez(iter_gnn_node_texts_path, **node_texts1)  # 直接存多个 numpy 数组
+np.savez(iter_gnn_node_texts_path, **node_texts1)  # 
 print('GNN embedding success !!!')
 
