@@ -1,0 +1,5 @@
+pip install tdda -i  https://pypi.doubanio.com/simple/  --trusted-host pypi.doubanio.com
+
+tax 数据集： /home/songmiaohui/anaconda3/envs/bclean/lib/python3.8/site-packages/pgmpy/estimators/BayesianEstimator.py
+line 216: pseudo_counts = np.ones(cpd_shape, dtype=np.float32) * alpha
+      原来： pseudo_counts = np.ones(cpd_shape, dtype=float) * alpha

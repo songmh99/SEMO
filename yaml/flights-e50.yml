@@ -1,0 +1,93 @@
+dirty_path : 'data/flights/flights-inner_outer_error-50.csv'
+clean_path : 'data/flights/clean.csv'
+rule_path : "./data_with_rules/flights/dc_rules_holoclean.txt"
+fd_rule_path : "./data_with_rules/flights/dc_rules-validate-fd-horizon.txt"
+task_name : "flights_error50"
+result_dir : 'Repaired_res/'
+uc_json_path : "./BClean/UC_json/flights.json"
+
+baran_res_path : 'Repaired_res/flights_error50/baran_hos.csv'
+holistic_res_path : 'Repaired_res/flights_error50/holistic_hos.csv'
+bclean_res_path : 'Repaired_res/flights_error50/bclean_hos.csv'
+bigdancing_res_path : 'Repaired_res/flights_error50/bigdancing_hos.csv'
+horizon_res_path : 'Repaired_res/flights_error50/horizon_hos.csv'
+## downstream
+semo_res_path: 'Repaired_res/flights_error50/semo_res.csv'
+
+## baseline_enssemble_process_metric (data_process):
+train_df_path : 'Repaired_res/flights_error50/repaired_data_train.pkl'
+test_df_path : 'Repaired_res/flights_error50/repaired_data_test.pkl'
+train_indices_path : 'Repaired_res/flights_error50/train_indices.pkl'
+test_indices_path : 'Repaired_res/flights_error50/test_indices.pkl'
+method_list : ['bclean','bigdancing','holistic','horizon','baran']
+name_list : ['position','dirty','bclean','bigdancing','holistic','horizon','baran']
+res_ensemble : 'Repaired_res/flights_error50/res_ensemble.txt'
+mlb_pkl_path : 'Repaired_res/flights_error50/mlp.pkl' # 获得类别对应关系
+
+
+## generate_gnn_embedding:
+embedding_iter_epochs : 500
+gnn_embed_model_path : 'Repaired_res/flights_error50/gnn_embed_model.pth'
+gnn_embeddings_path : 'Repaired_res/flights_error50/gnn_embeddings.pkl'
+gnn_node_embeddings_path : 'Repaired_res/gnn_node_embeddings.npz'
+text_embed_dim : 128
+gnn_hidden_dim: 128
+embed_train_weight : 0.5
+embed_train_lr : 0.0001
+
+## mlp.py
+# device : 'cpu'
+device : 'cuda:1'
+pretrain_model_path : './pre-trained/bert-tiny-uncased'
+encode_text_max_length : 32
+cellclsmodel_hidden_dim : 256
+num_classes : 6
+dataloader_batchsize : 32
+# lr : 1e-4
+lr : 0.0001
+train_epochs : 100
+res_file : 'Repaired_res/flights_error50/res_mlp.txt'
+clsmodel_path : 'Repaired_res/flights_error50/mlp.pth'
+
+## embed_compare:
+GNNembedMLP_res_file : 'Repaired_res/flights_error50/RES_GNNembedMLP.txt'
+
+GNNembedMLP_train_log_file : 'Repaired_res/flights_error50/GNNembedMLP_train_log.txt'
+GNNembedMLP_clsmodel_path : 'Repaired_res/flights_error50/GNNembedMLP.pth'
+GNNembedContext_train_log_file : 'Repaired_res/flights_error50/GNNembedContext_train_log.txt'
+GNNembedContext_clsmodel_path : 'Repaired_res/flights_error50/GNNembedContext.pth'
+MLP_train_log_file : 'Repaired_res/flights_error50/MLP_train_log.txt'
+MLP_clsmodel_path : 'Repaired_res/flights_error50/MLP.pth'
+MLPContext_train_log_file : 'Repaired_res/flights_error50/MLPContext_train_log.txt'
+MLPContext_clsmodel_path : 'Repaired_res/flights_error50/MLPContext.pth'
+
+GNNembed_dataloader_batchsize : 32
+GNNembed_lr : 0.0001
+GNNembed_train_epochs : 100
+GNNembed_clsmodel_path : 'Repaired_res/flights_error50/GNNembed-mlp.pth'
+
+
+
+
+### iterating train
+iterating_cls_model_path : 'Repaired_res/flights_error50/iterating_cls.pth'
+iterating_gnn_model_path : 'Repaired_res/flights_error50/iterating_gnn.pth'
+iterating_res_file_path : 'Repaired_res/flights_error50/ITER_RES.txt'
+iterating_train_log_file_path : 'Repaired_res/flights_error50/Iter_train_log.txt'
+iter_gnn_node_texts_path : 'Repaired_res/flights_error50/iter_gnn_node_texts.npz'
+iterating_gnn_lr : 0.002
+iterating_cls_lr : 0.0001
+small_epoch : 10
+iterate_num : 20
+labelloss_weight : 1
+labelloss_tau : 0.7
+labelloss_neg_num : 30
+structloss_weight : 1
+structloss_tau : 0.7
+structloss_neg_num : 10
+switch_freq : 3
+train_cls_begin : 2
+budget_ratio : 0.2
+
+######
+error_type_result_dir: 'Error_Type_Repaired_res/'

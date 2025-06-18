@@ -1,0 +1,6 @@
+*/src/
+*.pyc
+*.json
+*/.ipynb_checkpoints/*
+*./supplementaries/
+*.tex
